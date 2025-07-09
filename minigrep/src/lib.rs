@@ -23,13 +23,35 @@ pub struct Config {
 
 // 检查叫做 IGNORE_CASE 的环境变量
 impl Config {
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("not enough arguments");
-        }
+    // pub fn build(args: &[String]) -> Result<Config, &'static str> {
+    // if args.len() < 3 {
+    //     return Err("not enough arguments");
+    // }
 
-        let query = args[1].clone();
-        let file_path = args[2].clone();
+    // let query = args[1].clone();
+    // let file_path = args[2].clone();
+
+    // let ignore_case = env::var("IGNORE_CASE").is_ok();
+
+    // Ok(Config {
+    //     query,
+    //     file_path,
+    //     ignore_case,
+    // })
+
+    // 以迭代器作为参数更新 Config::build 的签名
+    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        args.next();
+
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string"),
+        };
+
+        let file_path = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a file path"),
+        };
 
         let ignore_case = env::var("IGNORE_CASE").is_ok();
 
@@ -74,16 +96,24 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+// pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+//     let mut results = Vec::new();
+
+//     for line in contents.lines() {
+//         if line.contains(query) {
+//             results.push(line);
+//         }
+//     }
+
+//     results
+// }
+
+// 在 search 函数实现中使用迭代器适配器
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-        }
-    }
-
-    results
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 // 它在比较查询和每一行之前将它们都转换为小写
